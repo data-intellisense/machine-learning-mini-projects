@@ -1,0 +1,8 @@
+plots
+backup
+venv
+dist
+*.pyc
+.env
+.DS_Store
+.vscode
