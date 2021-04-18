@@ -110,6 +110,7 @@ app.layout = html.Div(
             interval=1 * 1000,  # in milliseconds
             n_intervals=0,
             max_intervals=0,
+            disabled=False,
         ),
     ],
     style={"display": "inline-block"},
