@@ -94,6 +94,7 @@ app.layout = html.Div(
                 html.Button(
                     id="confirm-download",
                     children="download all",
+                    n_clicks=None,
                     style={
                         "margin": "10px",
                         "width": "300px",
@@ -104,65 +105,53 @@ app.layout = html.Div(
                 ),
             ],
         ),
-        Download(id="download-df"),
-        dcc.Interval(
-            id="interval-component",
-            interval=1 * 1000,  # in milliseconds
-            n_intervals=0,
-            max_intervals=0,
-            disabled=False,
-        ),
+        # upload and download up to 5 files, you may set the upper limit to any number
+        # you want, ideally more than what you need. It should not affect the performance
+        # significantly
+        html.Div([Download(id=f"download-df-{i}") for i in range(5)]),
     ],
     style={"display": "inline-block"},
 )
 
 
 @app.callback(
+    [Output(f"download-df-{i}", "data") for i in range(5)],
+    Input("confirm-download", "n_clicks"),
     [
-        Output("interval-component", "max_intervals"),
-        Output("download-df", "data"),
-    ],
-    [
-        Input("confirm-download", "n_clicks"),
-        Input("interval-component", "n_intervals"),
-        Input("upload-techSheets", "filename"),
-        Input("upload-techSheets", "contents"),
+        State("upload-techSheets", "filename"),
+        State("upload-techSheets", "contents"),
     ],
 )
 def update_uploads(
     n_clicks,
-    n_intervals,
     techSheetFilename,
     techSheetContents,
 ):
     if n_clicks is not None:
-        if techSheetFilename is not None and n_intervals < len(techSheetFilename):
+        if techSheetFilename is not None:
 
-            df = [
+            list_of_df = [
                 parseContents(c, n)
                 for c, n in zip(techSheetContents, techSheetFilename)
             ]
-            df = df[n_intervals]
-            df_name = techSheetFilename[n_intervals]
 
             """
             Do something cool with df
             """
 
-            print(f"{datetime.now()}")
-            print(n_intervals, df_name)
-
-            return [
-                len(techSheetFilename),
+            outputDF = [
                 send_data_frame(
                     df.to_csv,
                     filename=df_name,
-                ),
-            ]
+                )
+                for df, df_name in zip(list_of_df, techSheetFilename)
+            ] + [None for i in range(5 - len(techSheetFilename))]
+
+            return outputDF
         else:
-            return [0, None]
+            return [None for i in range(5)]
     else:
-        return [0, None]
+        return [None for i in range(5)]
 
 
 if __name__ == "__main__":
